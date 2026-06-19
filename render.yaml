@@ -1,0 +1,32 @@
+services:
+  # ── Streamlit Dashboard (public-facing UI) ──────────────────────
+  - type: web
+    name: flood-risk-dashboard
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app/dashboard.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: MODEL_PATH
+        value: model/flood_model.pkl
+      - key: LOG_DB
+        value: model/predictions.db
+    disk:
+      name: model-store
+      mountPath: /app/model
+      sizeGB: 1
+
+  # ── FastAPI Backend (REST API) ──────────────────────────────────
+  - type: web
+    name: flood-risk-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MODEL_PATH
+        value: model/flood_model.pkl
+      - key: LOG_DB
+        value: model/predictions.db
+    disk:
+      name: model-store-api
+      mountPath: /app/model
+      sizeGB: 1
